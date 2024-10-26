@@ -1,6 +1,7 @@
 #include <QWidget>
 #include <QPen>
 #include <QPainter>
+#include <cstdlib>
 #include <qapplication.h>
 #include <qbrush.h>
 #include <qcontainerfwd.h>
@@ -14,18 +15,68 @@
 #include <QApplication>
 #include <QPaintEvent>
 #include <qclipboard.h>
-#include <iostream>
 #include <vector>
 #include <math.h>
 #include <sstream>
 #include <QtGui>
 
-#include "bintree.hpp"
+#include "node.hpp"
 
-template <typename K, typename T>
-class TreeDrawer: public QWidget {
+using std::string;
+using std::vector;
+using std::pair;
+
+/**
+ * Служебный виджет (окно) отрисовки дерева.
+ */
+template <class K, class T>
+class _TreeDrawer;
+
+/**
+ * Нарисовать дерево tree в окне title.
+ */
+template<typename K, typename T>
+void draw_tree(vector<Node<K, T>> tree, string title="Дерево");
+
+
+/**
+ * Класс управления выводом нескольких деревьев.
+ */
+template <class K, class T>
+class DrawTrees {
 public:
-    std::vector<Node<K, T>> tree;
+    /**
+     * Добавить дерево в список деревьев.
+     */
+    void push(vector<Node<K, T>> tree, string title="");
+
+    /**
+     * Нарисовать деревья
+     */
+    void draw();
+
+private:
+    vector<pair<vector<Node<K, T>>, string>> trees;
+};
+
+
+
+////////////////////
+// Дальше реализация
+////////////////////
+
+/**
+ * Виджет (окно) отрисовки дерева
+ */
+template <class K, class T>
+class _TreeDrawer: public QWidget {
+    vector<Node<K, T>> tree;
+
+public:
+    _TreeDrawer(vector<Node<K, T>> tr, string win_title): tree{tr} {
+        setWindowTitle(QString::fromStdString(win_title));
+        resize(800, 600);
+    }
 
     int get_x(int i, int w) {
         int deep = floor(log2(i+1));
@@ -82,44 +133,43 @@ public:
             QClipboard *clipboard = QApplication::clipboard();
             clipboard->setPixmap(this->grab());
         }
+        if (event->key() == Qt::Key_Q) {
+            exit(0);
+        }
+
     }
 };
 
+
 template<typename K, typename T>
-void draw_tree(std::vector<std::pair<K, T>> tree) {
+void draw_tree(vector<Node<K, T>> tree, string title) {
     int argc = 0;
     QApplication app(argc, nullptr);
-    TreeDrawer<K,T> drawer;
-    drawer.setWindowTitle("Дерево");
-    drawer.tree = tree;
-
-    drawer.resize(800, 600);
+    _TreeDrawer<K, T> drawer{tree, title};
     drawer.show();
-
     app.exec();
 }
 
-template <typename K, typename T>
-class DrawTrees {
-    std::vector<std::vector<Node<K, T>>> trees;
-public:
-    void push(std::vector<Node<K, T>> tree) {
-        trees.push_back(tree);
-    }
 
-    void draw() {
-        int argc = 0;
-        QApplication app(argc, nullptr);
-        for (int i=0; i<trees.size(); ++i) {
-            TreeDrawer<K,T> *drawer = new TreeDrawer<K, T>;
+template <class K, class T>
+void DrawTrees<K, T>::push(vector<Node<K, T>> tree, string title) {
+    trees.push_back({tree, title});
+}
+
+template <class K, class T>
+void DrawTrees<K, T>::draw() {
+    int argc = 0;
+    QApplication app(argc, nullptr);
+    for (int i=0; i<trees.size(); ++i) {
+        string title = trees[i].second;
+        if (title.length() == 0) {
             std::ostringstream s;
             s << "Дерево " << i;
-            drawer->setWindowTitle(QString::fromStdString(s.str()));
-            drawer->tree = trees[i];
-
-            drawer->resize(800, 600);
-            drawer->show();
+            title = s.str();
         }
-        app.exec();
+
+        _TreeDrawer<K,T> *drawer = new _TreeDrawer<K, T>(trees[i].first, title);
+        drawer->show();
     }
-};
+    app.exec();
+}

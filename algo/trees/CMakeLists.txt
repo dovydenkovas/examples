@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE Debug)
 
 project(trees)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)

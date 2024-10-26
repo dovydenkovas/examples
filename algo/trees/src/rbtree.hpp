@@ -1,9 +1,8 @@
 #pragma once
 #include <utility>
 #include <cmath>
-
-
 #include "bintree.hpp"
+#include "node.hpp"
 
 using std::pair;
 
@@ -11,52 +10,41 @@ using std::pair;
 template <typename K, typename T>
 class RBTree: public BinTree<K, T> {
 public:
-    RBTree();
     void insert(K key, T data);
     void remove(K key);
+
+    using BinTree<K, T>::BinTree;
 
 private:
     void left_rotate(_Node<K, T> *node);
     void right_rotate(_Node<K, T> *node);
     void insert_fixup(_Node<K, T> *node);
+    void remove_fixup(_Node<K, T> *node);
 };
 
 
 template <typename K, typename T>
-RBTree<K, T>::RBTree() {
-    this->nil = new _Node<K, T>{{}, {}};
-    this->nil->color = 'b';
-    this->root = this->nil;
-}
-
-template <typename K, typename T>
 void RBTree<K, T>::insert(K key, T data) {
-    // Создаем новый узел
-    _Node<K, T> *new_node = new _Node{key, data, this->nil, this->nil};
-    new_node->color = 'r';
+    _Node<K, T> *node = this->search_node(key);
 
-    // Ищем позицию для вставки
-    _Node<K, T> *node = this->root;
-    _Node<K, T> *parent = this->nil;
-    while (node != this->nil) {
-        parent = node;
-        if (key < node->key)
-            node = node->left;
-        else
-            node = node->right;
+    if (!node->is_nil()) {
+        node->data = data;
+        return;
     }
 
-    // Вставляем новый узел
-    new_node->parent = parent;
-    if (parent == this->nil)
-        this->root = new_node;
-    else if (key < parent->key)
-        parent->left = new_node;
-    else
-        parent->right = new_node;
+    node->some();
+    node->color = RED;
+    node->key = key;
+    node->data = data;
+    if (node->left == nullptr)
+        node->left = new _Node<K, T>;
+    if (node->right == nullptr)
+        node->right = new _Node<K, T>;
+    node->left->parent = node;
+    node->right->parent = node;
 
     // Восстанавливаем красно-черные свойства
-    insert_fixup(new_node);
+    insert_fixup(node);
 }
 
 
@@ -65,21 +53,20 @@ void RBTree<K, T>::left_rotate(_Node<K, T> *node) {
     // Новый корень
     _Node<K, T> *new_root = node->right;
 
-    // Связь с родителем поддерева
-    new_root->parent = node->parent;
-    if (new_root->parent != this->nil) {
-        if (node->parent->left == node)
-            new_root->parent->left = new_root;
-        else
-            new_root->parent->right = new_root;
-    } else
-        this->root = new_root;
-
     // Превращение левого поддерева нового корня
     // в правое поддерево старого.
     node->right = new_root->left;
-    if (node->right != this->nil)
-        node->right->parent = node;
+    node->right->parent = node;
+
+
+    // Связь с родителем поддерева
+    new_root->parent = node->parent;
+    if (new_root->parent->is_nil())
+        this->root = new_root;
+    else if (new_root->parent->left == node)
+        new_root->parent->left = new_root;
+    else
+        new_root->parent->right = new_root;
 
     // Смена взаимоотношений старого и нового корней.
     new_root->left = node;
@@ -94,7 +81,7 @@ void RBTree<K, T>::right_rotate(_Node<K, T> *node) {
 
     // Связь с родителем поддерева
     new_root->parent = node->parent;
-    if (new_root->parent != this->nil) {
+    if (!new_root->parent->is_nil()) {
         if (node->parent->left == node)
             new_root->parent->left = new_root;
         else
@@ -105,8 +92,7 @@ void RBTree<K, T>::right_rotate(_Node<K, T> *node) {
     // Превращение правого поддерева нового корня
     // в левое поддерево старого корня.
     node->left = new_root->right;
-    if (node->left != this->nil)
-        node->left->parent = node;
+    node->left->parent = node;
 
     // Смена взаимоотношений старого и нового корней.
     new_root->right = node;
@@ -116,63 +102,76 @@ void RBTree<K, T>::right_rotate(_Node<K, T> *node) {
 
 template <typename K, typename T>
 void RBTree<K, T>::insert_fixup(_Node<K, T> *node) {
-    while (node->parent->color == 'r') {
+    while (node->parent->color == RED) {
         // Узел в левом поддереве
         if (node->parent->parent->left == node->parent) {
+
             _Node<K, T> *uncle = node->parent->parent->right;
-            if (uncle->color == 'r') {
-                uncle->color = 'b';
-                node->parent->color = 'b';
-                node->parent->parent->color = 'r';
+            if (uncle->color == RED) {
+                uncle->color = BLACK;
+                node->parent->color = BLACK;
+                node->parent->parent->color = RED;
                 node = node->parent->parent;
             } else {
                 if (node == node->parent->right) {
                     node = node->parent;
                     left_rotate(node);
                 }
-                node->parent->color = 'b';
-                node->parent->parent->color = 'r';
+                node->parent->color = BLACK;
+                node->parent->parent->color = RED;
                 right_rotate(node->parent->parent);
             }
         }
         // Узел в правом поддерерве
         else {
+
             _Node<K, T> *uncle = node->parent->parent->left;
-            if (uncle->color == 'r') {
-                node->parent->color = 'b';
-                uncle->color = 'b';
-                node->parent->parent->color = 'r';
+            if (uncle->color == RED) {
+                node->parent->color = BLACK;
+                uncle->color = BLACK;
+                node->parent->parent->color = RED;
                 node = node->parent->parent;
             } else {
                 if (node == node->parent->left) {
                     node = node->parent;
                     right_rotate(node);
                 }
-                node->parent->color = 'b';
-                node->parent->parent->color = 'r';
+                node->parent->color = BLACK;
+                node->parent->parent->color = RED;
                 left_rotate(node->parent->parent);
             }
         }
     }
 
-    this->root->color = 'b';
+    this->root->color = BLACK;
 }
 
 template <typename K, typename T>
 void RBTree<K, T>::remove(K key) {
-   // TODO
-    auto node = this->search_node(key);
-    if (node == nullptr)
+    _Node<K, T> *node = this->search_node(key);
+    if (node->is_nil())
         return;
 
-    if (node->left == nullptr)
-        this->transplant(node, node->right);
-    else if (node->right == nullptr)
-        this->transplant(node, node->left);
+    Color original_color = node->color;
+    _Node<K, T> *x;
 
-    else {
+    if (node->left->is_nil()) {
+        delete node->left; // nil
+        x = node->right;
+        this->transplant(node, node->right);
+    } else if (node->right->is_nil()) {
+        delete node->right; // nil
+        x = node->left;
+        this->transplant(node, node->left);
+    } else {
         auto min = this->minimum_node(node->right);
-        if (min->parent != node) {
+        delete min->left; // nil
+
+        x = min->right;
+        original_color = min->color;
+        if (min->parent == node)
+            x->parent = min;
+        else {
             this->transplant(min, min->right);
             min->right = node->right;
             min->right->parent = min;
@@ -181,7 +180,79 @@ void RBTree<K, T>::remove(K key) {
         this->transplant(node, min);
         min->left = node->left;
         min->left->parent = min;
+        min->color = node->color;
     }
 
-    delete  node;
+    if (node != this->root)
+        delete node;
+    else
+        node->nil();
+    if (original_color == BLACK)
+        remove_fixup(x);
+}
+
+
+template <typename K, typename T>
+void RBTree<K, T>::remove_fixup(_Node<K, T> *node) {
+    while (node->color == BLACK && node != this->root) {
+        // Левый потомок
+        if (node == node->parent->left) {
+            _Node<K, T> *brother = node->parent->right;
+            if (brother->color == RED) {
+               brother->color = BLACK;
+               node->parent->color = RED;
+               left_rotate(node->parent);
+               brother = node->parent->right;
+            }
+
+            if (brother->left->color == BLACK &&
+               brother->right->color == BLACK) {
+                   brother->color = RED;
+                   node = node->parent;
+               }
+            else {
+                if (brother->right->color == BLACK) {
+                    brother->left->color = BLACK;
+                    brother->color = RED;
+                    right_rotate(brother);
+                    brother = node->parent->right;
+                }
+                brother->color = node->parent->color;
+                node->parent->color = BLACK;
+                brother->right->color = BLACK;
+                left_rotate(node->parent);
+                node = this->root;
+            }
+        }
+        // Правый потомок
+        else {
+            _Node<K, T> *brother = node->parent->left;
+            if (brother->color == RED) {
+                brother->color = BLACK;
+                node->parent->color = RED;
+                right_rotate(node->parent);
+                brother = node->parent->left;
+            }
+
+            if (brother->right->color == BLACK &&
+                brother->left->color == BLACK) {
+                    brother->color = RED;
+                    node = node->parent;
+            } else {
+                if (brother->left->color == BLACK) {
+                    brother->right->color = BLACK;
+                    brother->color = RED;
+                    left_rotate(brother);
+                    brother = node->parent->left;
+                }
+                    brother->color = node->parent->color;
+                    node->parent->color = BLACK;
+                    brother->left->color = BLACK;
+                    right_rotate(node->parent);
+                    node = this->root;
+            }
+        }
+    }
+
+    node->color = BLACK;
 }
