@@ -5,9 +5,9 @@
 
 using namespace std;
 
-constexpr int AMOUNT_COUNT = 20;
+constexpr int AMOUNT_COUNT = 10000;
 
-void dsort(vector<int> &arr) {
+void dipers_sort(vector<int> &arr) {
     // Временная сложность O(m + n)
     // Пространственная O(m+n)
     vector<int> amount(AMOUNT_COUNT, 0);
@@ -25,10 +25,12 @@ void dsort(vector<int> &arr) {
 }
 
 
+#ifndef MAKE_TESTS
 int main() {
     vector<int> arr = {9, 8, 12, 7, 6, 12, 4, 5, 1, 2, 3, 12};
 
     print_array(arr);
-    dsort(arr);
+    dipers_sort(arr);
     print_array(arr);
 }
+#endif

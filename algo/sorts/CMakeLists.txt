@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
+include(GoogleTest)
+enable_testing()
 
 set(CMAKE_CXX_STANDART 23)
 set(CMAKE_CXX_STANDART_REQUIRED ON)
@@ -14,3 +16,7 @@ add_executable(quick_sort src/quick_sort.cpp)
 add_executable(selection_sort src/selection_sort.cpp)
 add_executable(shell_sort_sort src/shell_sort.cpp)
 add_executable(timsort src/timsort.cpp)
+
+add_executable(tests src/tests.cpp)
+target_link_libraries(tests gtest gtest_main)
+gtest_add_tests(TARGET tests TEST_SUFFIX TEST_LIST)

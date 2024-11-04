@@ -8,7 +8,7 @@ using namespace std;
 
 
 template <typename T>
-void msort(vector<T> &arr) {
+void merge_sort(vector<T> &arr) {
     if (arr.size() <= 1)
         return;
 
@@ -17,14 +17,16 @@ void msort(vector<T> &arr) {
     vector<T> left(left_size);
     vector<T> right(right_size);
 
-    for (int i = 0; i < left.size(); ++i)
+    for (int i = 0; i < left.size(); ++i) {
         left[i] = arr[i];
+    }
 
-    for (int j = 0; j < right.size(); ++j)
+    for (int j = 0; j < right.size(); ++j) {
         right[j] = arr[j+left_size];
+    }
 
-    msort(left);
-    msort(right);
+    merge_sort(left);
+    merge_sort(right);
 
     int i = 0;
     int j = 0;
@@ -54,11 +56,12 @@ void msort(vector<T> &arr) {
     }
 }
 
-
+#ifndef MAKE_TESTS
 int main() {
     vector<int> arr = {9, 8, 7, 6, 4, 5, 1, 2, 3};
 
     print_array(arr);
-    msort(arr);
+    merge_sort(arr);
     print_array(arr);
 }
+#endif

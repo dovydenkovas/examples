@@ -7,7 +7,7 @@ using namespace std;
 
 
 template <typename T>
-void csort(vector<T> &arr) {
+void count_sort(vector<T> &arr) {
     vector<T> old = arr;
     for (int i=0; i<old.size(); i++) {
         int c = 0;
@@ -20,10 +20,12 @@ void csort(vector<T> &arr) {
 }
 
 
+#ifndef MAKE_TESTS
 int main() {
     vector<int> arr = {9, 8, 7, 6, 4, 5, 1, 2, 3};
 
     print_array(arr);
-    csort(arr);
+    count_sort(arr);
     print_array(arr);
 }
+#endif

@@ -7,7 +7,7 @@ using namespace std;
 
 
 template <typename T>
-void isort(vector<T> &arr) {
+void insertion_sort(vector<T> &arr) {
     for (int i=1; i<arr.size(); ++i) {
         int j = i;
         T buff = arr[i];
@@ -19,11 +19,12 @@ void isort(vector<T> &arr) {
     }
 }
 
-
+#ifndef MAKE_TESTS
 int main() {
     vector<int> arr = {9, 8, 7, 6, 4, 5, 1, 2, 3};
 
     print_array(arr);
-    isort(arr);
+    insertion_sort(arr);
     print_array(arr);
 }
+#endif

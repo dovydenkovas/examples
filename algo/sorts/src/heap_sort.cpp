@@ -19,7 +19,7 @@ void sorting_tree(vector<int> &arr, int size, int node=0) {
     }
 }
 
-void hsort(vector<int> &arr) {
+void heap_sort(vector<int> &arr) {
     int heap_size = arr.size();
 
     for (int i=0; i<arr.size(); i++) {
@@ -28,11 +28,12 @@ void hsort(vector<int> &arr) {
     }
 }
 
-
+#ifndef MAKE_TESTS
 int main() {
     vector<int> arr =  {9, 8, 12, 7, 6, 12, 4, 5, 1, 2, 3, 12};
 
     print_array(arr);
-    hsort(arr);
+    heap_sort(arr);
     print_array(arr);
 }
+#endif
